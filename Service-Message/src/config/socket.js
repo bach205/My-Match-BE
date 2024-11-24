@@ -34,6 +34,18 @@ const socketSetUp = server => {
             socket.broadcast.to(defineRoom(arg.srcId, arg.desId)).emit("message", arg)
             callback({ status: "send" })
         })
+        socket.on("LoadMessage", async (arg, callback) => {
+            const query = {
+                srcId: { $eq: arg.srcId },
+                desId: { $eq: arg.desId },
+            }
+            // Sắp xếp theo trường `createdAt` giảm dần, lấy 20 tài liệu cuối cùng
+            const message = await mongodb.find(query).sort({ createdAt: -1 }).limit(20).toArray();
+
+            // Sau đó, sắp xếp lại theo thứ tự tăng dần của `createdAt`
+            message.sort((a, b) => a.createdAt - b.createdAt);
+            callback({ message });
+        })
     })
 }
 
